@@ -4,65 +4,125 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Our Special Day ❤️</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
 
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js"></script>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
     body {
       margin: 0;
-      min-height: 100vh;
+      font-family: Georgia, serif;
+      background: #fffaf7;
+    }
+
+    #welcome {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 24px;
+      text-align: center;
       background: #fffaf7;
       color: #473b38;
-      font-family: Georgia, serif;
-      text-align: center;
-      padding: 24px;
-    }
-
-    .card {
-      width: 100%;
-      max-width: 420px;
-      padding: 32px 22px;
-      border: 1px solid #e7d7d0;
-      border-radius: 18px;
-      background: white;
-    }
-
-    h1 {
-      font-size: 27px;
-      font-weight: normal;
-    }
-
-    p {
-      line-height: 1.8;
     }
 
     button {
-      margin-top: 18px;
-      padding: 14px 25px;
-      border: none;
-      border-radius: 30px;
+      padding: 14px 24px;
+      border: 0;
+      border-radius: 28px;
       background: #8e5c57;
       color: white;
-      font-size: 16px;
+      font-size: 17px;
+    }
+
+    #hint {
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+
+    a-scene {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
 
 <body>
-  <main class="card">
+  <div id="welcome">
     <h1>For My Love ❤️</h1>
-    <p>
-      Some moments become memories.<br>
-      Some people become home.
-    </p>
     <p>Our little story is waiting for you.</p>
-    <button onclick="alert('Our story is coming soon ❤️')">
-      Open Our Story ❤️
-    </button>
-  </main>
+    <button id="start">Open Our Story ❤️</button>
+    <p id="hint">Tap to start, then point your camera at the birthday picture.</p>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: ./targets.mind; autoStart: false;"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
+    <a-assets>
+      <video
+        id="loveVideo"
+        src="./birthday.mp4"
+        preload="auto"
+        playsinline
+        webkit-playsinline
+        crossorigin="anonymous">
+      </video>
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-video
+        src="#loveVideo"
+        position="0 0 0"
+        width="0.75"
+        height="1">
+      </a-video>
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const startButton = document.getElementById("start");
+    const welcome = document.getElementById("welcome");
+    const hint = document.getElementById("hint");
+    const scene = document.querySelector("a-scene");
+    const video = document.getElementById("loveVideo");
+
+    startButton.addEventListener("click", async () => {
+      welcome.style.display = "none";
+
+      try {
+        await scene.systems["mindar-image-system"].start();
+        hint.textContent = "Point your camera at the printed picture.";
+      } catch (error) {
+        welcome.style.display = "flex";
+        hint.textContent =
+          "Camera could not start. Please allow camera access and try again.";
+      }
+    });
+
+    scene.addEventListener("targetFound", async () => {
+      try {
+        await video.play();
+      } catch (error) {
+        welcome.style.display = "flex";
+        hint.textContent = "Tap Open Our Story to allow video playback.";
+      }
+    });
+
+    scene.addEventListener("targetLost", () => {
+      video.pause();
+    });
+  </script>
 </body>
 </html>
